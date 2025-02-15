@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>绘制三角形</title>
+    <script src="./src/glMatrix.js"></script>
+    <script>
+      let gl; // WebGL上下文
+      let projMat4; // 投影矩阵
+      // 顶点着色器
+      const vertexShaderSource = `
+        attribute vec4 a_Position;
+        uniform mat4 proj;
+        void main() {
+          gl_Position = proj * a_Position;
+          gl_PointSize = 60.0;
+        }
+      `;
+      // 片元着色器
+      const fragmentShaderSource = `
+            void main() {
+                gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+            }
+        `;
+      // 1. 初始化
+      function init() {
+        initWebGL();
+        initShaders();
+        initBuffers();
+        draw();
+      }
+      // 2. 初始化WebGL
+      function initWebGL() {
+        const canvas = document.getElementById("canvas");
+        gl = canvas.getContext("webgl");
+        if (!gl) {
+          console.log("Failed to get the rendering context for WebGL");
+          return;
+        }
+        gl.viewport(0, 0, canvas.clientWidth, canvas.clientHeight); // 设置视口 0,0,400,400 为canvas的大小
+        projMat4 = mat4.create(); // 创建一个4*4的矩阵
+        mat4.ortho(
+          0,
+          canvas.clientWidth,
+          canvas.clientHeight,
+          0,
+          -1,
+          1,
+          projMat4
+        ); // 设置正交投影矩阵
+      }
+      // 3. 初始化着色器
+      function initShaders() {
+        console.log("Shaders");
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER); // 创建顶点着色器
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); // 创建片元着色器
+        gl.shaderSource(vertexShader, vertexShaderSource); // 设置顶点着色器代码
+        gl.shaderSource(fragmentShader, fragmentShaderSource); // 设置片元着色器代码
+        gl.compileShader(vertexShader); // 编译顶点着色器
+        gl.compileShader(fragmentShader); // 编译片元着色器
+
+        const program = gl.createProgram(); // 创建着色器程序
+        gl.attachShader(program, vertexShader); // 附加顶点着色器
+        gl.attachShader(program, fragmentShader); // 附加片元着色器
+        gl.linkProgram(program); // 链接着色器程序
+        gl.useProgram(program); // 使用着色器程序
+
+        gl.program = program; // 保存着色器程序
+      }
+      // 4. 初始化缓冲区
+      function initBuffers() {
+        console.log("Buffers");
+        // const arr = [100.0, 100.0, 0.0, 1.0, 200.0, 200.0, 0.0, 1.0, 300.0, 200.0, 0, 1.0]; // 顶点坐标
+        const arr = [100.0, 100.0, 0.0, 1.0, 200.0, 200.0, 0.0, 1.0, 300.0, 200.0, 0, 1.0, 400, 600, 0, 1]; // 顶点坐标
+        const vertices = new Float32Array(arr); // 顶点坐标数组
+        const a_Position = gl.getAttribLocation(gl.program, "a_Position"); // 获取顶点着色器中的a_Position变量
+        if (a_Position < 0) {
+          console.error("Failed to get the storage location of a_Position");
+          return;
+        }
+        console.log("a_Position location:", a_Position);
+
+        const lineBuffer = gl.createBuffer(); // 创建缓冲区
+        if (!lineBuffer) {
+          console.error("Failed to create the buffer object");
+          return;
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer); // 绑定缓冲区
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW); // 向缓冲区写入数据
+
+        gl.enableVertexAttribArray(a_Position); // 启用缓冲区
+        gl.vertexAttribPointer(a_Position, 4, gl.FLOAT, false, 4 * 4, 0); // 给缓冲区设置数据
+
+        const u_Proj = gl.getUniformLocation(gl.program, "proj"); // 获取顶点着色器中的proj变量
+        if (!u_Proj) {
+          console.error("Failed to get the storage location of proj");
+          return;
+        }
+        console.log("u_Proj location:", u_Proj);
+        gl.uniformMatrix4fv(u_Proj, false, projMat4); // 将投影矩阵传递给u_Proj变量
+      }
+
+      function draw() {
+        console.log("draw");
+        gl.clearColor(0.0, 0.0, 0.0, 1.0); // 设置清空颜色为黑色
+        gl.clear(gl.COLOR_BUFFER_BIT); // 清空颜色缓冲区
+        // gl.drawArrays(gl.LINE_LOOP, 0, 3); // gl.LINE_LOOP表示绘制三点闭合线 0表示从第0个顶点开始绘制 3表示绘制3个顶点
+        // gl.drawArrays(gl.TRIANGLES, 0, 3); // gl.TRIANGLES表示绘制三角形 0表示从第0个顶点开始绘制 3表示绘制3个顶点, 如果有6个点则会绘制两个三角形
+        // gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); // gl.TRIANGLE_STRIP绘制条带状的四边形 0表示从第0个顶点开始绘制 4表示绘制4个顶点
+        gl.drawArrays(gl.TRIANGLE_FAN, 0, 4); // gl.TRIANGLE_FAN绘制三角形组成的类似扇形的图形 0表示从第0个顶点开始绘制 4表示绘制4个顶点
+      }
+    </script>
+  </head>
+  <body onLoad="init()">
+    <canvas id="canvas" width="1024" height="768"></canvas>
+  </body>
+</html>
