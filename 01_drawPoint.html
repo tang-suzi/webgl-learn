@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>drawPoint</title>
+    <script src="./src/glMatrix.js"></script>
+    <script>
+      let gl; // WebGL上下文
+      let projMat4; // 投影矩阵
+      // 顶点着色器
+      const vertexShaderSource = `
+        attribute vec4 a_Position;
+        uniform mat4 proj;
+        void main() {
+          gl_Position = proj * a_Position;
+          gl_PointSize = 60.0;
+        }
+      `;
+      // 片元着色器
+      const fragmentShaderSource = `
+            void main() {
+                gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+            }
+        `;
+      // 1. 初始化
+      function init() {
+        initWebGL();
+        initShaders();
+        initBuffers();
+        drawPoint();
+      }
+      // 2. 初始化WebGL
+      function initWebGL() {
+        const canvas = document.getElementById("canvas");
+        gl = canvas.getContext("webgl");
+        if (!gl) {
+          console.log("Failed to get the rendering context for WebGL");
+          return;
+        }
+        gl.viewport(0, 0, canvas.clientWidth, canvas.clientHeight); // 设置视口 0,0,400,400 为canvas的大小
+        projMat4 = mat4.create(); // 创建一个4*4的矩阵
+        mat4.ortho(
+          0,
+          canvas.clientWidth,
+          canvas.clientHeight,
+          -1,
+          1,
+          projMat4
+        ); // 设置正交投影矩阵
+      }
+      // 3. 初始化着色器
+      function initShaders() {
+        console.log("Shaders");
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER); // 创建顶点着色器
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); // 创建片元着色器
+        gl.shaderSource(vertexShader, vertexShaderSource); // 设置顶点着色器代码
+        gl.shaderSource(fragmentShader, fragmentShaderSource); // 设置片元着色器代码
+        gl.compileShader(vertexShader); // 编译顶点着色器
+        gl.compileShader(fragmentShader); // 编译片元着色器
+
+        const program = gl.createProgram(); // 创建着色器程序
+        gl.attachShader(program, vertexShader); // 附加顶点着色器
+        gl.attachShader(program, fragmentShader); // 附加片元着色器
+        gl.linkProgram(program); // 链接着色器程序
+        gl.useProgram(program); // 使用着色器程序
+
+        gl.program = program; // 保存着色器程序
+      }
+      // 4. 初始化缓冲区
+      function initBuffers() {
+        console.log("Buffers");
+        const vertices = new Float32Array([100.0, 100.0, 0.0, 1.0]); // 顶点坐标 x,y,z,w 为0,0,0,1 w为1表示点 w为0表示线 w为-1表示面
+        const a_Position = gl.getAttribLocation(gl.program, "a_Position"); // 获取顶点着色器中的a_Position变量
+        gl.vertexAttrib4fv(a_Position, vertices); // 将数据传递给a_Position 变量 4fv表示4个浮点数
+        const u_Proj = gl.getUniformLocation(gl.program, "proj"); // 获取顶点着色器中的proj变量 用于传递投影矩阵 proj是uniform变量 用于传递投影矩阵
+        gl.uniformMatrix4fv(u_Proj, false, projMat4); // 将投影矩阵传递给u_Proj变量 false表示不转置 projMat4表示投影矩阵
+      }
+      // 5. 绘制点
+      function drawPoint() {
+        console.log("drawPoint");
+        gl.clearColor(0.0, 0.0, 0.0, 1.0); // 设置清空颜色为黑色
+        gl.clear(gl.COLOR_BUFFER_BIT); // 清空颜色缓冲区
+        gl.drawArrays(gl.POINTS, 0, 1); // 绘制点 gl.POINTS表示绘制点 0表示从第0个顶点开始绘制 1表示绘制一个点
+      }
+    </script>
+  </head>
+  <body onLoad="init()">
+    <canvas id="canvas" width="400" height="400"></canvas>
+  </body>
+</html>
