@@ -71,7 +71,7 @@
       // 4. 初始化缓冲区
       function initBuffers() {
         console.log("Buffers");
-        const arr = [100.0, 100.0, 0.0, 1.0, 200.0, 200.0, 0.0, 1.0]; // 顶点坐标
+        const arr = [100.0, 100.0, 0.0, 1.0, 200.0, 200.0, 0.0, 1.0, 300.0, 200.0, 0, 1.0]; // 顶点坐标
         const vertices = new Float32Array(arr); // 顶点坐标数组
         const a_Position = gl.getAttribLocation(gl.program, "a_Position"); // 获取顶点着色器中的a_Position变量
         if (a_Position < 0) {
@@ -104,7 +104,8 @@
         console.log("draw");
         gl.clearColor(0.0, 0.0, 0.0, 1.0); // 设置清空颜色为黑色
         gl.clear(gl.COLOR_BUFFER_BIT); // 清空颜色缓冲区
-        gl.drawArrays(gl.LINES, 0, 2); // 绘制线段 gl.LINES表示绘制线段 0表示从第0个顶点开始绘制 2表示绘制2个顶点
+        // gl.drawArrays(gl.LINES, 0, 2); // 绘制线段 gl.LINES表示绘制线段 0表示从第0个顶点开始绘制 2表示绘制2个顶点
+        gl.drawArrays(gl.LINE_STRIP, 0, 3); // 绘制三点连线 gl.LINE_STRIP表示绘制三点连线 0表示从第0个顶点开始绘制 3表示绘制3个顶点
       }
     </script>
   </head>
