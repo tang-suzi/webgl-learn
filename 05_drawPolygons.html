@@ -128,6 +128,12 @@
         console.log("draw");
         gl.clearColor(0.0, 0.0, 0.0, 1.0); // 设置清空颜色为黑色
         gl.clear(gl.COLOR_BUFFER_BIT); // 清空颜色缓冲区
+        /**
+         * 绘制多边形
+         * @param mode 指定绘制的方式 gl.TRIANGLES表示绘制三角形 gl.TRIANGLE_STRIP表示绘制三角形条带 gl.TRIANGLE_FAN表示绘制三角形扇 gl.LINES表示绘制线段 gl.LINE_STRIP表示绘制线段条带 gl.LINE_LOOP表示绘制线段环 gl.POINTS表示绘制点
+         * @param first 指定从哪个顶点开始绘制
+         * @param count 指定绘制的顶点数量
+         */
         gl.drawArrays(gl.LINE_LOOP, 0, 5); // gl.TRIANGLE_FAN绘制三角形组成的类似扇形的图形 0表示从第0个顶点开始绘制 4表示绘制4个顶点
       }
     </script>

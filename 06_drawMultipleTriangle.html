@@ -53,50 +53,103 @@
       // 3. 初始化着色器
       function initShaders() {
         console.log("Shaders");
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER); // 创建顶点着色器
-        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); // 创建片元着色器
-        gl.shaderSource(vertexShader, vertexShaderSource); // 设置顶点着色器代码
-        gl.shaderSource(fragmentShader, fragmentShaderSource); // 设置片元着色器代码
-        gl.compileShader(vertexShader); // 编译顶点着色器
-        gl.compileShader(fragmentShader); // 编译片元着色器
+        /**
+         * 创建着色器
+         * @param type 着色器类型 gl.VERTEX_SHADER 表示顶点着色器 gl.FRAGMENT_SHADER 表示片元着色器
+         */
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        /**
+         * 设置着色器代码
+         * @param shader 着色器对象
+         * @param source 着色器代码
+         */
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        /**
+         * 编译着色器
+         * @param shader 着色器对象
+         */
+        gl.compileShader(vertexShader);
+        gl.compileShader(fragmentShader);
 
         const program = gl.createProgram(); // 创建着色器程序
-        gl.attachShader(program, vertexShader); // 附加顶点着色器
-        gl.attachShader(program, fragmentShader); // 附加片元着色器
-        gl.linkProgram(program); // 链接着色器程序
-        gl.useProgram(program); // 使用着色器程序
+        /**
+         * 附加着色器 附加顶点着色器和片元着色器到着色器程序
+         * @param program 着色器程序
+         * @param shader 着色器对象
+         */
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        /**
+         * 链接着色器程序
+         * @param program 着色器程序
+         */
+        gl.linkProgram(program);
+        /**
+         * 使用着色器程序
+         * @param program 着色器程序
+         */
+        gl.useProgram(program);
 
         gl.program = program; // 保存着色器程序
       }
       // 4. 初始化缓冲区
       function initBuffers() {
         console.log("Buffers");
-        const arrIndex = [
-          0, 1, 2, 0, 3, 4,
-        ]
+        const arrIndex = [0, 1, 2, 0, 3, 4];
         const arr = [
           100.0, 100.0, 0.0, 1.0, 200.0, 200.0, 0.0, 1.0, 300.0, 200.0, 0, 1.0,
-          400, 600, 0, 1,
-          500, 700, 0, 1
+          400, 600, 0, 1, 500, 700, 0, 1,
         ]; // 顶点坐标
         const vertices = new Float32Array(arr); // 顶点坐标数组
-        const a_Position = gl.getAttribLocation(gl.program, "a_Position"); // 获取顶点着色器中的a_Position变量
+        /**
+         * 获取顶点着色器中的a_Position变量
+         * @param program 着色器程序
+         * @param name 变量名
+         */
+        const a_Position = gl.getAttribLocation(gl.program, "a_Position");
         if (a_Position < 0) {
           console.error("Failed to get the storage location of a_Position");
           return;
         }
         console.log("a_Position location:", a_Position);
 
-        const lineBuffer = gl.createBuffer(); // 创建缓冲区
+        // 创建缓冲区
+        const lineBuffer = gl.createBuffer();
         if (!lineBuffer) {
           console.error("Failed to create the buffer object");
           return;
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer); // 绑定缓冲区
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW); // 向缓冲区写入数据
+        /**
+         * 绑定缓冲区
+         * @param target 缓冲区对象的类型 gl.ARRAY_BUFFER 表示缓冲区对象中包含了顶点的数据 gl.ELEMENT_ARRAY_BUFFER 表示缓冲区对象中包含了顶点的索引值 gl.COPY_READ_BUFFER 表示缓冲区对象中包含了复制操作的源数据 gl.COPY_WRITE_BUFFER 表示缓冲区对象中包含了复制操作的目标数据 gl.TRANSFORM_FEEDBACK_BUFFER 表示缓冲区对象中包含了变换反馈操作的数据 gl.UNIFORM_BUFFER 表示缓冲区对象中包含了uniform变量的数据
+         * @param buffer 缓冲区对象 gl.createBuffer() 创建的缓冲区对象
+         */
+        gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+        /**
+         * 向缓冲区写入数据
+         * @param target 缓冲区对象的类型
+         * @param data 写入缓冲区的数据
+         * @param usage 表示程序将如何使用存储在缓冲区对象中的数据
+         */
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-        gl.enableVertexAttribArray(a_Position); // 启用缓冲区
-        gl.vertexAttribPointer(a_Position, 4, gl.FLOAT, false, 4 * 4, 0); // 给缓冲区设置数据
+        /**
+         * 启用缓冲区
+         * @param index 指定要启用的顶点属性的索引
+         */
+        gl.enableVertexAttribArray(a_Position);
+        /**
+         * 给缓冲区设置数据
+         * @param index 指定要修改的顶点属性的索引
+         * @param size 指定每个顶点属性的组件数量 1-4 之间 1 表示一个顶点属性包含一个值 2 表示一个顶点属性包含两个值 3 表示一个顶点属性包含三个值 4 表示一个顶点属性包含四个值
+         * @param type 指定数组中每个组件的数据类型
+         * @param normalized 指定在访问顶点数据时是否应将整数数据归一化为特定范围
+         * @param stride 指定相邻两个顶点属性开始位置之间的字节数
+         * @param offset 指定第一个组件在缓冲区中的偏移量
+         */
+        gl.vertexAttribPointer(a_Position, 4, gl.FLOAT, false, 4 * 4, 0);
 
         const u_Proj = gl.getUniformLocation(gl.program, "proj"); // 获取顶点着色器中的proj变量
         if (!u_Proj) {
@@ -104,9 +157,9 @@
           return;
         }
         const indexArr = new Uint16Array(arrIndex);
-        let indexBuffer = gl.createBuffer()
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArr, gl.STATIC_DRAW)
+        let indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArr, gl.STATIC_DRAW);
         console.log("u_Proj location:", u_Proj);
         gl.uniformMatrix4fv(u_Proj, false, projMat4); // 将投影矩阵传递给u_Proj变量
       }
@@ -114,7 +167,14 @@
         console.log("draw");
         gl.clearColor(0.0, 0.0, 0.0, 1.0); // 设置清空颜色为黑色
         gl.clear(gl.COLOR_BUFFER_BIT); // 清空颜色缓冲区
-        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0); // drawElements 
+        /**
+         * 绘制图形
+         * @param mode 指定绘制的方式 gl.POINTS 表示绘制一系列点 gl.LINES 表示绘制一系列单独的线段 gl.LINE_STRIP 表示绘制一个线条 gl.LINE_LOOP 表示绘制一个线条，首尾相连 gl.TRIANGLES 表示绘制一系列三角形 gl.TRIANGLE_STRIP 表示绘制一个三角带 gl.TRIANGLE_FAN 表示绘制一个三角扇
+         * @param count 指定绘制顶点的个数
+         * @param type 指定元素数组缓冲区中的值的类型
+         * @param offset 指定元素数组缓冲区中的偏移量
+         */
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0); // drawElements
       }
     </script>
   </head>
