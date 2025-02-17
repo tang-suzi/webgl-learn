@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GL旋转</title>
+    <script>
+      let gl;
+      // 旋转矩阵
+      //   const vertexShaderSource = `
+      //     attribute vec3 a_Position;
+      //     uniform mat4 u_RotationMatrix;
+      //     void main() {
+      //       gl_Position = u_RotationMatrix * vec4(a_Position, 1.0);
+      //     }
+      //   `;
+      // 通过uniform传递旋转角度
+      const vertexShaderSource = `
+        attribute vec3 a_Position;
+        uniform float angle;
+        void main() {
+          gl_Position = vec4(a_Position.x*cos(angle)-a_Position.y*sin(angle),a_Position.x*sin(angle)+a_Position.y*cos(angle), 0, 1.0);
+        }
+      `;
+      const fragmentShaderSource = `
+        void main() {
+          gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+        }
+      `;
+      function init() {
+        initGL();
+        initShaders();
+        initBuffers();
+        draw();
+      }
+      function initGL() {
+        const canvas = document.getElementById("gl");
+        gl = canvas.getContext("webgl");
+        gl.viewport(0, 0, canvas.clientWidth, canvas.clientHeight);
+      }
+      /**
+       * 初始化着色器
+       * 创建顶点着色器和片元着色器
+       * 将着色器源码分配给着色器对象
+       * 编译着色器
+       * 创建着色器程序
+       * 将着色器对象分配给着色器程序
+       * 链接着色器程序
+       * 使用着色器程序
+       */
+      function initShaders() {
+        // 创建顶点着色器
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        // 创建片元着色器
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+        // 设置顶点着色器代码
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        // 设置片元着色器代码
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+
+        // 编译顶点着色器
+        gl.compileShader(vertexShader);
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(vertexShader));
+          return;
+        }
+        // 编译片元着色器
+        gl.compileShader(fragmentShader);
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(fragmentShader));
+          return;
+        }
+        // 创建着色器程序
+        const program = gl.createProgram();
+
+        // 将着色器对象分配给着色器程序
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        // 链接着色器程序
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          console.error(
+            "Unable to initialize the shader program:",
+            gl.getProgramInfoLog(program)
+          );
+          return;
+        }
+        // 使用着色器程序
+        gl.useProgram(program);
+        // 将着色器程序分配给gl对象
+        gl.program = program;
+      }
+      /**
+       * 初始化缓冲区
+       * 创建缓冲区
+       * 将顶点数据写入缓冲区
+       * 将缓冲区分配给attribute变量
+       */
+      function initBuffers() {
+        const arr = [0, 0.4, 0, 0, 0.5, 0, 0.1, 0.4, 0];
+        const vertex = new Float32Array(arr);
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertex, gl.STATIC_DRAW);
+        const a_Position = gl.getAttribLocation(gl.program, "a_Position");
+        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(a_Position);
+
+        // 旋转矩阵
+        // const angle = (90.0 * Math.PI) / 180.0;
+        // const cosB = Math.cos(angle);
+        // const sinB = Math.sin(angle);
+        // const rotationMatrix = new Float32Array([
+        //   cosB, sinB, 0.0, 0.0,
+        //   -sinB,cosB, 0.0, 0.0,
+        //   0.0,  0.0,  1.0, 0.0,
+        //   0.0,  0.0,  0.0, 1.0,
+        // ]);
+
+        // const u_RotationMatrix = gl.getUniformLocation(
+        //   gl.program,
+        //   "u_RotationMatrix"
+        // );
+        // gl.uniformMatrix4fv(u_RotationMatrix, false, rotationMatrix);
+        // 通过uniform传递旋转角度
+        const angle = gl.getUniformLocation(gl.program, "angle");
+        const radian = (90 * Math.PI) / 180.0;
+        gl.uniform1f(angle, radian);
+      }
+      function draw() {
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
+    </script>
+  </head>
+  <body onload="init()">
+    <canvas id="gl" width="1024" height="768"></canvas>
+  </body>
+</html>
