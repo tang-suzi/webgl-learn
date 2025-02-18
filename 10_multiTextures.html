@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>多重纹理</title>
+    <script src="./src/glMatrix.js"></script>
+    <script>
+      const projMat4 = mat4.create();
+      let gl;
+      let count = 0;
+      let uniformTexture;
+      let uniformTexture1;
+      let texture;
+      let texture1;
+      const vertexShaderSource = `
+        attribute vec4 a_Position;
+        uniform mat4 proj;
+        attribute vec2 outUV;
+        varying vec2 inUV;
+        void main() {
+          gl_Position = proj * a_Position;
+          inUV = outUV;
+        }
+      `;
+      const fragmentShaderSource = `
+        precision mediump float;
+        uniform sampler2D texture;
+        uniform sampler2D texture1;
+        uniform float anim;
+        varying vec2 inUV;
+        void main(void) {
+          vec4 color1 = texture2D(texture, inUV);
+          vec4 color2 = texture2D(texture1, vec2(inUV.x + anim, inUV.y));
+          gl_FragColor = color1 + color2;
+        }
+      `;
+      function webglStart() {
+        init();
+        tick();
+      }
+      function tick() {
+        requestAnimFrame(tick);
+        draw();
+      }
+      function init() {
+        initWebGL();
+        initShaders();
+        initBuffers();
+      }
+      function initWebGL() {
+        const canvas = document.getElementById("canvas");
+        gl = canvas.getContext("webgl");
+        gl.viewport(0, 0, canvas.clientWidth, canvas.clientHeight);
+        mat4.ortho(
+          0,
+          canvas.clientWidth,
+          canvas.clientHeight,
+          0,
+          -1.0,
+          1.0,
+          projMat4
+        );
+      }
+      function initShaders() {
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+
+        gl.compileShader(vertexShader);
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+          console.error(
+            "An error occurred compiling the vertex shader:",
+            gl.getShaderInfoLog(vertexShader)
+          );
+          return;
+        }
+
+        gl.compileShader(fragmentShader);
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+          console.error(
+            "An error occurred compiling the fragment shader:",
+            gl.getShaderInfoLog(fragmentShader)
+          );
+          return;
+        }
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          console.error(
+            "Unable to initialize the shader program:",
+            gl.getProgramInfoLog(program)
+          );
+          return;
+        }
+
+        gl.useProgram(program);
+        gl.program = program;
+      }
+      function initBuffers() {
+        let arr = [
+          0, 0, 0, 1, 0, 0, 0, 500, 0, 1, 0, 1, 500, 0, 0, 1, 1, 0,
+
+          500, 0, 0, 1, 1, 0, 0, 500, 0, 1, 0, 1, 500, 500, 0, 1, 1, 1,
+        ];
+        let vertices = new Float32Array(arr);
+        const a_Position = gl.getAttribLocation(gl.program, "a_Position");
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(a_Position);
+        gl.vertexAttribPointer(a_Position, 4, gl.FLOAT, false, 6 * 4, 0);
+
+        const uniformProj = gl.getUniformLocation(gl.program, "proj");
+        gl.uniformMatrix4fv(uniformProj, false, projMat4);
+
+        const attribOutUV = gl.getAttribLocation(gl.program, "outUV");
+        gl.enableVertexAttribArray(attribOutUV);
+        gl.vertexAttribPointer(attribOutUV, 2, gl.FLOAT, false, 6 * 4, 4 * 4);
+
+        uniformTexture = gl.getUniformLocation(gl.program, "texture");
+        uniformTexture1 = gl.getUniformLocation(gl.program, "texture1");
+
+        texture = initTextures("./assets/山水.png");
+        texture1 = initTextures("./assets/fog.png");
+      }
+      function handleLoadedTexture(texture) {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.RGBA,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          texture.image
+        );
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      }
+      function initTextures(image) {
+        const textureHandle = gl.createTexture();
+        textureHandle.image = new Image();
+        textureHandle.image.src = image;
+        textureHandle.image.onload = function () {
+          handleLoadedTexture(textureHandle);
+        };
+        return textureHandle;
+      }
+      function draw() {
+        gl.clearColor(0.0, 1.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.enable(gl.DEPTH_TEST);
+
+        // 传递动画参数
+        const uniformAnim = gl.getUniformLocation(gl.program, "anim");
+        count += 0.01;
+        gl.uniform1f(uniformAnim, count);
+
+        // 纹理变动
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(uniformTexture, 0);
+
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, texture1);
+        gl.uniform1i(uniformTexture1, 1);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+      window.requestAnimFrame = (function () {
+        return (
+          window.requestAnimationFrame ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame ||
+          function (callback) {
+            window.setTimeout(callback, 1000 / 60);
+          }
+        );
+      })();
+    </script>
+  </head>
+  <body onload="webglStart()">
+    <canvas id="canvas" width="1024" height="768"></canvas>
+  </body>
+</html>

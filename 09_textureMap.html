@@ -80,7 +80,7 @@
       }
       function initBuffers() {
         const vertices = new Float32Array([
-          100.0, 100.0, 0.0, 1.0, 100.0, 200.0, 0.0, 1.0, 200.0, 200.0, 0.0,
+          100.0, 100.0, 0.0, 1.0, 100.0, 110.0, 0.0, 1.0, 200.0, 200.0, 0.0,
           1.0, 200, 100, 0, 1,
         ]);
         const a_Position = gl.getAttribLocation(gl.program, "a_Position");
@@ -125,7 +125,7 @@
       function initTextures() {
         const textureHandle = gl.createTexture();
         textureHandle.image = new Image();
-        textureHandle.image.src = "./assets/img.png";
+        textureHandle.image.src = "./assets/point.png";
         textureHandle.image.onload = function () {
           loadTexture(textureHandle);
         };
