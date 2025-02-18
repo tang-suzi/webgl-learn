@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>通过键盘事件控制图像移动</title>
+    <script>
+      let gl;
+      let countX = 0;
+      let countY = 0;
+      const vertexShaderSource = `
+        attribute vec3 a_Position;
+        uniform float angleX;
+        uniform float angleY;
+        void main() {
+          gl_Position = vec4(a_Position.x + angleX,a_Position.y+angleY, 0, 1.0);
+        }
+      `;
+      const fragmentShaderSource = `
+            void main() {
+                gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+            }
+        `;
+      function init() {
+        initWebGL();
+        initShaders();
+        initBuffers();
+        draw();
+      }
+      function initWebGL() {
+        const canvas = document.getElementById("canvas");
+        gl = canvas.getContext("webgl");
+        if (!gl) {
+          console.log("Failed to get the rendering context for WebGL");
+          return;
+        }
+      }
+      function initShaders() {
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        gl.compileShader(vertexShader);
+        gl.compileShader(fragmentShader);
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        gl.useProgram(program);
+        gl.program = program;
+      }
+      function initBuffers() {
+        const arr = [0.1, 0.4, 0, 0.1, 0.5, 0, 0.2, 0.4, 0];
+        const vertices = new Float32Array(arr);
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        const a_Position = gl.getAttribLocation(gl.program, "a_Position");
+        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(a_Position);
+
+        const angleX = gl.getUniformLocation(gl.program, "angleX");
+        const angleY = gl.getUniformLocation(gl.program, "angleY");
+        gl.uniform1f(angleX, countX);
+        gl.uniform1f(angleY, countY);
+      }
+      function draw() {
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
+      document.addEventListener("keydown", (e) => {
+        switch (e.keyCode) {
+          case 38:
+            countY += 0.01;
+            break;
+          case 40:
+            countY -= 0.01;
+            break;
+          case 37:
+            countX -= 0.01;
+            break;
+          case 39:
+            countX += 0.01;
+            break;
+        }
+      });
+      const onload = () => {
+        init();
+        window.requestAnimationFrame(onload);
+      };
+    </script>
+  </head>
+  <body onload="onload()">
+    <canvas id="canvas" width="1024" height="768"></canvas>
+  </body>
+</html>
