@@ -125,7 +125,7 @@
       function initTextures() {
         const textureHandle = gl.createTexture();
         textureHandle.image = new Image();
-        textureHandle.image.src = "./img.png";
+        textureHandle.image.src = "./assets/img.png";
         textureHandle.image.onload = function () {
           loadTexture(textureHandle);
         };
