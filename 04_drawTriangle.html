@@ -70,10 +70,7 @@
       }
       // 4. 初始化缓冲区
       function initBuffers() {
-        console.log("Buffers");
-        // const arr = [100.0, 100.0, 0.0, 1.0, 200.0, 200.0, 0.0, 1.0, 300.0, 200.0, 0, 1.0]; // 顶点坐标
-        const arr = [100.0, 100.0, 0.0, 1.0, 200.0, 200.0, 0.0, 1.0, 300.0, 200.0, 0, 1.0, 400, 600, 0, 1]; // 顶点坐标
-        const vertices = new Float32Array(arr); // 顶点坐标数组
+        const vertices = new Float32Array([100.0, 100.0, 0.0, 1.0, 200.0, 200.0, 0.0, 1.0, 300.0, 200.0, 0, 1.0, 400, 600, 0, 1]); // 顶点坐标数组
         const a_Position = gl.getAttribLocation(gl.program, "a_Position"); // 获取顶点着色器中的a_Position变量
         if (a_Position < 0) {
           console.error("Failed to get the storage location of a_Position");
