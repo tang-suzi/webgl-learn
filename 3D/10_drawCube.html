@@ -9,6 +9,37 @@
 <body>
     <canvas id="canvas" width="800" height="800"></canvas>
     <script>
+        let mouseState = false
+        let mouseDownX = 0;
+        let mouseDownY = 0;
+        let offsetX = 0;
+        let offsetY = 0;
+        let wheelMove = 0;
+        function mousedown(e){
+            mouseState = true;
+            mouseDownX = e.clientX
+            mouseDownY = e.clientY
+        }
+        function mousemove(e, gl){
+            if(mouseState) {
+                offsetX = e.clientX - mouseDownX
+                offsetY = e.clientY - mouseDownY
+                initBuffer(gl)
+            }
+        }
+        function mouseup(){
+            mouseState = false
+        }
+        function mousewheel (e, gl) {
+            wheelMove+=e.wheelDelta/100
+            initBuffer(gl)
+        }
+        function initEvent(gl){
+            document.onmousedown = (e) => mousedown(e)
+            document.onmousemove = (e) => mousemove(e, gl)
+            document.onmouseup = (e) => mouseup(e)
+            document.onmousewheel = (e) => mousewheel(e, gl)
+        }
         async function init(){
             const VSHADER_SOURCE = `
                 attribute vec4 a_position;
@@ -39,6 +70,7 @@
             gl.clearColor(0,0,0,1)
             gl.enable(gl.DEPTH_TEST)
             initBuffer(gl)
+            initEvent(gl)
         }
         function initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
             const vertexShader = gl.createShader(gl.VERTEX_SHADER)
@@ -117,17 +149,34 @@
             glMatrix.mat4.identity(projMatrix);
             glMatrix.mat4.perspective(projMatrix, 45 * Math.PI / 180, 1, 1, 1000) 
 
-            const modelMatrix = glMatrix.mat4.create()
-            glMatrix.mat4.identity(modelMatrix)
-            glMatrix.mat4.translate(modelMatrix, modelMatrix, [1,0,0])
+            // const modelMatrix = glMatrix.mat4.create()
+            // glMatrix.mat4.identity(modelMatrix)
+            // glMatrix.mat4.translate(modelMatrix, modelMatrix, [1,0,0])
+
+            const modelMatrixX = glMatrix.mat4.create()
+            glMatrix.mat4.identity(modelMatrixX)
+            glMatrix.mat4.rotate(modelMatrixX, modelMatrixX, offsetX * Math.PI / 180, [0,1,0])
+            const modelMatrixY = glMatrix.mat4.create()
+            glMatrix.mat4.identity(modelMatrixY)
+            glMatrix.mat4.rotate(modelMatrixY, modelMatrixY, offsetY * Math.PI / 180, [1,0,0])
+            const modelMatrixXY = glMatrix.mat4.create()
+            glMatrix.mat4.identity(modelMatrixXY)
+            glMatrix.mat4.multiply(modelMatrixXY, modelMatrixX, modelMatrixY)
+
+            const modelMatrixWheel = glMatrix.mat4.create()
+            glMatrix.mat4.identity(modelMatrixWheel)
+            glMatrix.mat4.translate(modelMatrixWheel, modelMatrixWheel, [0,0,wheelMove])
+
+            glMatrix.mat4.multiply(modelMatrixWheel, modelMatrixWheel, modelMatrixXY)
 
             const viewMatrix = glMatrix.mat4.create()
             glMatrix.mat4.identity(viewMatrix)
-            glMatrix.mat4.lookAt(viewMatrix, [5,5,5], [0,0,0], [0,1,0])
+            glMatrix.mat4.lookAt(viewMatrix, [0,0,10], [0,0,0], [0,1,0])
 
             const mvMatrix = glMatrix.mat4.create()
             glMatrix.mat4.identity(mvMatrix)
-            glMatrix.mat4.multiply(mvMatrix, viewMatrix, modelMatrix)
+            glMatrix.mat4.multiply(mvMatrix, viewMatrix, modelMatrixWheel)
+
             const mvpMatrix = glMatrix.mat4.create()
             glMatrix.mat4.identity(mvpMatrix)
             glMatrix.mat4.multiply(mvpMatrix, projMatrix, mvMatrix)
