@@ -9,34 +9,36 @@
 <body>
     <canvas id="canvas" width="800" height="800"></canvas>
     <script>
-        function init(){
+        async function init(){
             const VSHADER_SOURCE = `
                 attribute vec4 a_position;
                 uniform mat4 u_formMatrix;
-                uniform mat4 proj;
                 attribute vec4 a_color;
                 varying vec4 color;
+                attribute vec2 a_outUV;
+                varying vec2 v_inUV;
                 void main(void){
                     gl_Position =   u_formMatrix * a_position;
                     color = a_color;
+                    v_inUV = a_outUV;
                 }
             `
             const FSHADER_SOURCE = `
                 precision mediump float;
                 varying vec4 color;
+                uniform sampler2D texture;
+                varying vec2 v_inUV;
                 void main(void){
-                    gl_FragColor = color;
+                    gl_FragColor = texture2D(texture, v_inUV);
                 }
             `
             const canvas = document.getElementById('canvas')
             const gl = canvas.getContext('webgl')
             gl.viewport(0, 0, canvas.clientWidth, canvas.clientHeight)
-            gl.clearColor(0,0,0,1)
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-            gl.enable(gl.DEPTH_TEST)
             initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE)
+            gl.clearColor(0,0,0,1)
+            gl.enable(gl.DEPTH_TEST)
             initBuffer(gl)
-            gl.drawArrays(gl.TRIANGLES, 0, 36)
         }
         function initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
             const vertexShader = gl.createShader(gl.VERTEX_SHADER)
@@ -56,47 +58,48 @@
         }
         function initBuffer(gl) {
             const vertices = new Float32Array([
-                1, 1, 1, 1, 1.0, 0, 0, 1.0, 
-                -1, 1, 1, 1, 1.0, 0, 0, 1.0,
-                -1, -1, 1, 1, 1.0, 0, 0, 1.0,
-                1, 1, 1, 1, 1.0, 0, 0, 1.0,
-                -1, -1, 1, 1, 1.0, 0, 0, 1.0,
-                1, -1, 1, 1, 1.0, 0, 0, 1.0,  //前面
+                1, 1, 1, 1, 1, 1,
+                -1, 1,1, 1, 0, 1,
+                - 1,-1, 1, 1, 0, 0,
+                1,1,1, 1, 1, 1,
+                - 1,- 1,1, 1, 0, 0,
+                1,- 1, 1, 1, 1, 0,   //前面
 
-                1, 1, -1, 1, 1.0, 1.0, 0.0, 1.0,
-                1, 1, 1, 1, 1.0, 1.0, 0.0, 1.0,
-                1, -1, 1, 1, 1.0, 1.0, 0.0, 1.0,
-                1, 1, -1, 1, 1.0, 1.0, 0.0, 1.0,
-                1, -1, 1, 1, 1.0, 1.0, 0.0, 1.0,
-                1, -1, -1, 1, 1.0, 1.0, 0.0, 1.0, //右
+                1, 1, -1, 1,1, 1,
+                1, 1, 1, 1,0, 1,
+                1, -1, 1, 1, 0, 0,
+                1, 1, -1, 1,1,1,
+                1, -1, 1, 1,0,0,
+                1, -1, -1, 1,1,0,  //右
 
-                -1, 1, -1, 1, 1.0, 0.0, 1.0, 1.0,
-                1, 1, -1, 1, 1.0, 0.0, 1.0, 1.0,
-                1, -1, -1, 1, 1.0, 0.0, 1.0, 1.0,
-                -1, 1, -1, 1, 1.0, 0.0, 1.0, 1.0,
-                1, -1, -1, 1, 1.0, 0.0, 1.0, 1.0,
-                -1, -1, -1, 1, 1.0, 0.0, 1.0, 1.0,//后
+                -1, 1, -1, 1,1,1,
+                1, 1, -1, 1,0,1,
+                1, -1, -1, 1,0,0,
+                -1, 1, -1, 1,1,1,
+                1, -1, -1, 1,0,0,
+                -1, -1, -1, 1,1,0, //后
 
-                -1, 1, 1, 1, 1.0, 1.0, 1.0, 1.0,
-                -1, 1, -1, 1, 1.0, 1.0, 1.0, 1.0,
-                -1, -1, -1, 1, 1.0, 1.0, 1.0, 1.0,
-                -1, 1, 1, 1, 1.0, 1.0, 1.0, 1.0,
-                -1, -1, -1, 1, 1.0, 1.0, 1.0, 1.0,
-                -1, -1, 1, 1, 1.0, 1.0, 1.0, 1.0,//左
 
-                -1, 1, -1, 1, 0.0, 1.0, 0.0, 1.0,
-                -1, 1, 1, 1, 0.0, 1.0, 0.0, 1.0,
-                1, 1, 1, 1, 0.0, 1.0, 0.0, 1.0,
-                -1, 1, -1, 1, 0.0, 1.0, 0.0, 1.0,
-                1, 1, 1, 1, 0.0, 1.0, 0.0, 1.0,
-                1, 1, -1, 1, 0.0, 1.0, 0.0, 1.0, //上
+                -1, 1, 1, 1,1,1,
+                -1, 1, -1, 1,1,0,
+                -1, -1, -1, 1,0,0,
+                -1, 1, 1, 1,1,1,
+                -1, -1, -1, 1,0,0,
+                -1, -1, 1, 1,1,0, //左
 
-                -1, -1, 1, 1, 0.0, 1.0, 1.0, 1.0,
-                -1, -1, -1, 1, 0.0, 1.0, 1.0, 1.0,
-                1, -1, -1, 1, 0.0, 1.0, 1.0, 1.0,
-                -1, -1, 1, 1, 0.0, 1.0, 1.0, 1.0,
-                1, -1, -1, 1, 0.0, 1.0, 1.0, 1.0,
-                1, -1, 1, 1, 0.0, 1.0, 1.0, 1.0, //下
+                -1, 1, -1, 1, 0,1,
+                -1, 1, 1, 1, 0,0,
+                1, 1, 1, 1,1,0,
+                -1, 1, -1, 1,0,1,
+                1, 1, 1, 1,1,0,
+                1, 1, -1, 1,1,1,  //上
+
+                -1, -1, 1, 1,0,1,
+                -1, -1, -1, 1,0,0,
+                1, -1, -1, 1,1,0,
+                -1, -1, 1, 1,0,1,
+                1, -1, -1, 1,1,0,
+                1, -1, 1, 1,1,1,  //下
 
             ])
             const a_Position = gl.getAttribLocation(gl.program, "a_position")
@@ -104,12 +107,11 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
             gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
             gl.enableVertexAttribArray(a_Position)
-            gl.vertexAttribPointer(a_Position, 4, gl.FLOAT, false, 8*4, 0)
+            gl.vertexAttribPointer(a_Position, 4, gl.FLOAT, false, 6*4, 0)
 
-            const a_Color = gl.getAttribLocation(gl.program, "a_color")
-            gl.enableVertexAttribArray(a_Color)
-            gl.vertexAttribPointer(a_Color, 4, gl.FLOAT, false, 8*4, 4*4)
+            
             const uniformMatrix = gl.getUniformLocation(gl.program, "u_formMatrix")
+            initTexture(gl)
 
             const projMatrix = glMatrix.mat4.create();
             glMatrix.mat4.identity(projMatrix);
@@ -130,6 +132,35 @@
             glMatrix.mat4.identity(mvpMatrix)
             glMatrix.mat4.multiply(mvpMatrix, projMatrix, mvMatrix)
             gl.uniformMatrix4fv(uniformMatrix, false, mvpMatrix)
+        }
+        function initTexture(gl) {
+            const a_outUV = gl.getAttribLocation(gl.program, "a_outUV")
+            gl.enableVertexAttribArray(a_outUV)
+            gl.vertexAttribPointer(a_outUV, 2, gl.FLOAT, false, 6*4, 4*4)
+            const uniformTexture = gl.getUniformLocation(gl.program, "texture")
+
+            const textureHandle = gl.createTexture()
+            textureHandle.image = new Image()
+            textureHandle.image.src = './src/assets/山水.png'
+            textureHandle.image.onload = function() {
+                handleLoadedTexture(gl, textureHandle, uniformTexture)
+            }
+        }
+        function handleLoadedTexture(gl, texture, uniformTexture) {
+            gl.bindTexture(gl.TEXTURE_2D, texture)
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 666);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image)
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+            gl.activeTexture(gl.TEXTURE0)
+            gl.bindTexture(gl.TEXTURE_2D, texture)
+            gl.uniform1i(uniformTexture, 0);
+            // 确保纹理加载成功，将绘制方法放到这里
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+            gl.drawArrays(gl.TRIANGLES, 0, 36);
         }
         init()
     </script>
